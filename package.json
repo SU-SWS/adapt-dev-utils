@@ -6,7 +6,7 @@
   "bin": {
     "adapt-utils": "./bin/run"
   },
-  "bugs": "https://github.com/SU_SWS/adapt-dev-utils/issues",
+  "bugs": "https://github.com/SU-SWS/adapt-dev-utils/issues",
   "devDependencies": {
     "@oclif/dev-cli": "^1.26.0",
     "eslint": "^5.16.0",
@@ -22,11 +22,11 @@
     "/oclif.manifest.json",
     "/src"
   ],
-  "homepage": "https://github.com/SU_SWS/adapt-dev-utils",
+  "homepage": "https://github.com/SU-SWS/adapt-dev-utils",
   "keywords": [
     "oclif"
   ],
-  "license": "MIT",
+  "license": "GPL-3.0-or-later",
   "main": "src/index.js",
   "oclif": {
     "commands": "./src/commands",
@@ -35,7 +35,7 @@
       "@oclif/plugin-help"
     ]
   },
-  "repository": "SU_SWS/adapt-dev-utils",
+  "repository": "SU-SWS/adapt-dev-utils",
   "scripts": {
     "postpack": "rm -f oclif.manifest.json",
     "posttest": "eslint .",
