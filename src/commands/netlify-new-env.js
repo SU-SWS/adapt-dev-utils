@@ -1,15 +1,29 @@
-const {Command, flags} = require('@oclif/command');
-const NetlifyAPI = require('netlify');
-const inquirer = require('inquirer');
+/* eslint-disable camelcase */
+const {Command, flags} = require('@oclif/command')
+const NetlifyAPI = require('netlify')
+const inquirer = require('inquirer')
+const fetch = require('node-fetch')
 
 class NetlifyNewEnvCommand extends Command {
   async run() {
     const {flags} = this.parse(NetlifyNewEnvCommand)
     const netlify = new NetlifyAPI(flags.token)
-    const sites = await netlify.listSites({
-      filter: 'all'
+
+    const deploy_key = await fetch('https://api.netlify.com/api/v1/deploy_keys', {
+      method: 'post',
+      headers: {
+        Authorization: `Bearer ${flags.token}`,
+      },
     })
-    const siteNames = sites.map(site => site.name);
+    .then(response => response.json())
+    .then(json => json)
+
+    //TODO: Add the public key for this deploy key to the user's github account.
+
+    const sites = await netlify.listSites({
+      filter: 'all',
+    })
+    const siteNames = sites.map(site => site.name)
 
     let responses = await inquirer.prompt([{
       name: 'site',
@@ -18,31 +32,43 @@ class NetlifyNewEnvCommand extends Command {
       choices: siteNames,
     }])
 
-    const selectedSiteName = responses.site;
-    const selectedSite = sites.find((site) => {return site.name === selectedSiteName});
+    const selectedSiteName = responses.site
+    const selectedSite = sites.find(site => {
+      return site.name === selectedSiteName
+    })
 
     responses = await inquirer.prompt([{
       name: 'name',
       message: 'Enter a name for the new Netlify site:',
-      type: 'input'
+      type: 'input',
     }])
 
-    const name = responses.name;
+    const name = responses.name
 
     responses = await inquirer.prompt([{
       name: 'repo',
       message: 'Provide the repo url for the new site:',
       type: 'input',
-      default: selectedSite.build_settings.repo_url
+      default: selectedSite.build_settings.repo_url,
     }])
 
-    const repo = responses.repo
+    const repo_url = responses.repo
+    const repo_url_parts = repo_url.match(/https?:\/\/([^\/]+)\/(.*)/)
+    const repo_path = repo_url_parts[2]
+
+    const repoMetadata = await fetch(`https://api.github.com/repos/${repo_path}`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `token ${flags.githubToken}`,
+      },
+    })
+    .then(response => response.json())
 
     responses = await inquirer.prompt([{
       name: 'repo_branch',
       message: 'Enter the branch name to be used for deployments:',
       type: 'input',
-      default: selectedSite.build_settings.repo_branch
+      default: selectedSite.build_settings.repo_branch,
     }])
 
     const repo_branch = responses.repo_branch
@@ -52,35 +78,52 @@ class NetlifyNewEnvCommand extends Command {
   ----------------------------------
   Site Name: ${name}
   Template Site: ${selectedSiteName}
-  Repo: ${repo}
+  Repo: ${repo_url}
   Branch: ${repo_branch}
-    `);
+    `)
 
     responses = await inquirer.prompt([{
       name: 'confirm',
       message: 'Proceed creating site with the above settings?',
       type: 'confirm',
-      
     }])
-    
+
     if (!flags.dry) {
-      const response = await netlify.createSiteInTeam({
-        name: name,
+      await netlify.createSiteInTeam({
         account_slug: selectedSite.account_slug,
-        build_settings: {...selectedSite.build_settings}
+        body: {
+          name: name,
+          repo: {
+            provider: 'github',
+            id: repoMetadata.id,
+            repo: repo_path,
+            private: !selectedSite.build_settings.public_repo,
+            branch: repo_branch,
+            cmd: selectedSite.build_settings.cmd,
+            dir: selectedSite.build_settings.dir,
+            deploy_key_id: deploy_key.id,
+            env: selectedSite.build_settings.env,
+          },
+        },
+      })
+      .then((response) => {
+        console.log('Successfully created new site!')
+      })
+      .catch(err => {
+        console.log(err)
       })
     }
   }
 }
 
-NetlifyNewEnvCommand.description = `Run migrations against Storyblok environment.
-This wrapper provides additional protections, such as ensuring migrations are only ran once.
+NetlifyNewEnvCommand.description = `Create a new Netlify site, cloned from an existing site.
 `
 
 NetlifyNewEnvCommand.flags = {
-  token: flags.string({description: "Netlify token for authentication. Can also be passed in using NETLIFY_TOKEN environment variable.", env: 'NETLIFY_TOKEN', required: true}),
-  debug: flags.boolean({description: "Debug mode with additional output"}),
-  dry: flags.boolean({description: 'Dry Run'})
+  token: flags.string({description: 'Netlify token for authentication. Can also be passed in using NETLIFY_TOKEN environment variable.', env: 'NETLIFY_TOKEN', required: true}),
+  githubToken: flags.string({description: 'Github personal token (needed to link Netlify site with repo). Can aslo be set permanently using config-set github_token [your_token].', env: 'GITHUB_TOKEN'}),
+  debug: flags.boolean({description: 'Debug mode with additional output'}),
+  dry: flags.boolean({description: 'Dry Run'}),
 }
 
 module.exports = NetlifyNewEnvCommand
