@@ -7,18 +7,7 @@ const fetch = require('node-fetch')
 class NetlifyNewEnvCommand extends Command {
   async run() {
     const {flags} = this.parse(NetlifyNewEnvCommand)
-    const netlify = new NetlifyAPI(flags.token)
-
-    const deploy_key = await fetch('https://api.netlify.com/api/v1/deploy_keys', {
-      method: 'post',
-      headers: {
-        Authorization: `Bearer ${flags.token}`,
-      },
-    })
-    .then(response => response.json())
-    .then(json => json)
-
-    //TODO: Add the public key for this deploy key to the user's github account.
+    const netlify = new NetlifyAPI(flags.netlifyToken)
 
     const sites = await netlify.listSites({
       filter: 'all',
@@ -56,9 +45,42 @@ class NetlifyNewEnvCommand extends Command {
     const repo_url_parts = repo_url.match(/https?:\/\/([^\/]+)\/(.*)/)
     const repo_path = repo_url_parts[2]
 
+    // Add the deploy key to the repo.
+    const deploy_key = await fetch('https://api.netlify.com/api/v1/deploy_keys', {
+      method: 'post',
+      headers: {
+        Authorization: `Bearer ${flags.netlifyToken}`,
+      },
+    })
+    .then(response => response.json())
+    .then(json => json)
+
+    await fetch(`https://api.github.com/repos/${repo_path}/keys`, {
+      method: 'post',
+      headers: {
+        Accept: 'application/vnd.github.v3+json',
+        Authorization: `token ${flags.githubToken}`,
+      },
+      body: JSON.stringify({
+        title: `Netlify: ${name}`,
+        key: deploy_key.public_key,
+      }),
+    })
+    .then(res => {
+      if (res.status === 201) {
+        console.log('Deploy key added to Github repo')
+      } else {
+        throw new Error('Failed to add deploy key to github')
+      }
+    })
+    .catch(err => {
+      console.log('Failed to add deploy key to Github repo')
+      console.log(err)
+    })
+
     const repoMetadata = await fetch(`https://api.github.com/repos/${repo_path}`, {
       headers: {
-        Accept: 'application/json',
+        Accept: 'application/vnd.github.v3+json',
         Authorization: `token ${flags.githubToken}`,
       },
     })
@@ -106,7 +128,7 @@ class NetlifyNewEnvCommand extends Command {
           },
         },
       })
-      .then((response) => {
+      .then(response => {
         console.log('Successfully created new site!')
       })
       .catch(err => {
@@ -120,7 +142,7 @@ NetlifyNewEnvCommand.description = `Create a new Netlify site, cloned from an ex
 `
 
 NetlifyNewEnvCommand.flags = {
-  token: flags.string({description: 'Netlify token for authentication. Can also be passed in using NETLIFY_TOKEN environment variable.', env: 'NETLIFY_TOKEN', required: true}),
+  netlifyToken: flags.string({description: 'Netlify token for authentication. Can also be passed in using NETLIFY_TOKEN environment variable.', env: 'NETLIFY_TOKEN', required: true}),
   githubToken: flags.string({description: 'Github personal token (needed to link Netlify site with repo). Can aslo be set permanently using config-set github_token [your_token].', env: 'GITHUB_TOKEN'}),
   debug: flags.boolean({description: 'Debug mode with additional output'}),
   dry: flags.boolean({description: 'Dry Run'}),
