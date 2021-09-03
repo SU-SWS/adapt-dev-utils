@@ -14,7 +14,7 @@
     "globby": "^10.0.2"
   },
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=15.0.0"
   },
   "files": [
     "/bin",
@@ -54,6 +54,8 @@
     "@oclif/plugin-help": "^3.2.2",
     "cli-ux": "^5.5.1",
     "fs-extra": "^8.1.0",
+    "inquirer": "^6.5.2",
+    "netlify": "^6.1.29",
     "storyblok-js-client": "^4.0.9"
   }
 }

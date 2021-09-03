@@ -12,4 +12,12 @@ module.exports = async function(options) {
   if (configs.netlify_token) {
     process.env.NETLIFY_TOKEN = configs.netlify_token
   }
+
+  if (configs.github_user) {
+    process.env.GITHUB_USER = configs.github_user
+  }
+
+  if (configs.github_token) {
+    process.env.GITHUB_TOKEN = configs.github_token
+  }
 }

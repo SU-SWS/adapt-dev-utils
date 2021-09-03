@@ -17,7 +17,8 @@ class ConfigSetCommand extends Command {
       fs.ensureFileSync(configFilePath)
       fs.writeJSONSync(configFilePath, {
         netlify_token: null,
-        storyblok_token: null
+        storyblok_token: null,
+        github_token: null
       })
     }
 
