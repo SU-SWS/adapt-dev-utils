@@ -10,7 +10,7 @@
   "devDependencies": {
     "@oclif/dev-cli": "^1.26.0",
     "eslint": "^5.16.0",
-    "eslint-config-oclif": "^3.1.0",
+    "eslint-config-oclif": "^4.0.0",
     "globby": "^10.0.2"
   },
   "engines": {
