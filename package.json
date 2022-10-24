@@ -54,7 +54,7 @@
     "@oclif/plugin-help": "^3.2.2",
     "cli-ux": "^5.5.1",
     "fs-extra": "^8.1.0",
-    "inquirer": "^6.5.2",
+    "inquirer": "^9.1.4",
     "netlify": "^6.1.29",
     "storyblok-js-client": "^4.0.9"
   }
