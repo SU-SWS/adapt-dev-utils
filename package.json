@@ -55,7 +55,7 @@
     "cli-ux": "^5.5.1",
     "fs-extra": "^8.1.0",
     "inquirer": "^6.5.2",
-    "netlify": "^6.1.29",
+    "netlify": "^13.0.1",
     "storyblok-js-client": "^4.0.9"
   }
 }
