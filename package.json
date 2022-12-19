@@ -9,7 +9,7 @@
   "bugs": "https://github.com/SU-SWS/adapt-dev-utils/issues",
   "devDependencies": {
     "@oclif/dev-cli": "^1.26.0",
-    "eslint": "^5.16.0",
+    "eslint": "^8.30.0",
     "eslint-config-oclif": "^3.1.0",
     "globby": "^10.0.2"
   },
